@@ -101,8 +101,8 @@ module Twee2
                                       format: '{{STORY_FORMAT}}',
                                      options: ''
                       }) do
-        @story_data.style(story_css.to_i, role: 'stylesheet', id: 'twine-user-stylesheet', type: 'text/twine-css')
-        @story_data.script(story_js.to_i, role: 'script', id: 'twine-user-script', type: 'text/twine-javascript')
+        @story_data.style(story_css.to_sym, role: 'stylesheet', id: 'twine-user-stylesheet', type: 'text/twine-css')
+        @story_data.script(story_js.to_sym, role: 'script', id: 'twine-user-script', type: 'text/twine-javascript')
         @passages.each do |k,v|
           unless v[:exclude_from_output]
             @story_data.tag!('tw-passagedata', { pid: v[:pid], name: k, tags: v[:tags].join(' '), position: v[:position] }, v[:content])
