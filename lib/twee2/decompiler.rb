@@ -6,13 +6,15 @@ module Twee2
   class DecompilationFailedException < Exception; end
 
   class Decompiler
-    def self.decompile(url)
+    def self.decompile(url, exclude_passages)
       result = ''
       # Load the compiled HTML and sanity-check it
       html = Nokogiri::HTML(open(url), nil, 'utf-8')
       raise(DecompilationFailedException, 'tw-storydata not found') unless storydata = html.at_css('tw-storydata')
       # Extract the tw-storydata#name (StoryTitle) and #startnode
-      result << "::StoryTitle\n#{storydata[:name].strip}\n\n"
+      unless exclude_passages.include? 'StoryTitle'
+        result << "::StoryTitle\n#{storydata[:name].strip}\n\n"
+      end
       startnode_pid, startnode_name = storydata[:startnode].strip, nil
       ifid = storydata[:ifid]
       story_format = storydata[:format]
@@ -20,14 +22,19 @@ module Twee2
         story_format = 'SugarCube2'
       end
       # Extract the custom CSS and Javascript, if applicable
-      if (css = storydata.at_css('#twine-user-stylesheet')) && ((css_content = css.content.strip) != '')
+      if (!exclude_passages.include? 'StoryCSS') && \
+         (css = storydata.at_css('#twine-user-stylesheet')) && \
+         ((css_content = css.content.strip) != '')
         result << "::StoryCSS [stylesheet]\n#{css_content}\n\n"
       end
-      if (js = storydata.at_css('#twine-user-script')) && ((js_content = js.content.strip) != '')
+      if (!exclude_passages.include? 'StoryCSS') && \
+         (js = storydata.at_css('#twine-user-script')) && \
+         ((js_content = js.content.strip) != '')
         result << "::StoryJS [script]\n#{js.content}\n\n"
       end
       # Extract each passage
       storydata.css('tw-passagedata').each do |passagedata|
+        next if exclude_passages.include? passagedata[:name]
         # Check if this is the start passage and record this accordingly
         startnode_name = passagedata[:name] if(startnode_pid == passagedata[:pid])
         # Write the passage out
@@ -37,11 +44,13 @@ module Twee2
         result << "\n#{tidyup_passagedata(passagedata.content.strip)}\n\n"
       end
       # Write the Twee2 settings out (compatability layer)
-      result << "::Twee2Settings [twee2]\n"
-      result << "@story_start_name = '#{startnode_name.gsub("'", "\\'")}'\n" if startnode_name
-      result << "Twee2::build_config.story_ifid = '#{ifid}'\n"
-      result << "Twee2::build_config.story_format = '#{story_format}'\n"
-      result << "\n"
+      unless exclude_passages.include? 'Twee2Settings'
+        result << "::Twee2Settings [twee2]\n"
+        result << "@story_start_name = '#{startnode_name.gsub("'", "\\'")}'\n" if startnode_name
+        result << "Twee2::build_config.story_ifid = '#{ifid}'\n"
+        result << "Twee2::build_config.story_format = '#{story_format}'\n"
+        result << "\n"
+      end
       # Return the result
       result
     end

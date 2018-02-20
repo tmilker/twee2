@@ -30,8 +30,10 @@ class Twee2CLI < Thor
   end
 
   desc 'decompile [URL] [OUTPUT]', 'reverse-engineers Twee2/Twine 2 HTML output into a Twee2 source file'
+  method_option :exclude, type: :string, default: ''
+  method_option :'exclude-from', type: :string, default: ''
   def decompile(url, output)
-    Twee2::decompile(url, output)
+    Twee2::decompile(url, output, options)
   end
 
   desc 'version', "reports which version you're using and checks what the highest available version is"

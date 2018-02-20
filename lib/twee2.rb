@@ -10,38 +10,39 @@ module Twee2
   DEFAULT_FORMAT = 'Harlowe'
 
   def self.build(input, output, options = {})
-    Dir.chdir(::File.dirname(input))
-    
-    # Read and parse input file
-    begin
-      build_config.story_file = StoryFile::new(input)
-    rescue StoryFileNotFoundException
-      puts "ERROR: story file '#{input}' not found."
-      exit
-    end
-    # Read and parse format file, unless already set (by a Twee2::build_config.story_format call in the story file, for example)
-    if !build_config.story_format
+    Dir.chdir(::File.dirname(input)) do
+      
+      # Read and parse input file
       begin
-        build_config.story_format = StoryFormat::new(options[:format])
-      rescue StoryFormatNotFoundException
-        puts "ERROR: story format '#{options[:format]}' not found."
+        build_config.story_file = StoryFile::new(input)
+      rescue StoryFileNotFoundException
+        puts "ERROR: story file '#{input}' not found."
         exit
       end
-    end
-    # Load story format, if for some reason Twee2::build_config.story_format is set to a string rather than an instance
-    if build_config.story_format.is_a?(String)
-      new_format = build_config.story_format
-      begin
-        build_config.story_format = StoryFormat::new(new_format)
-      rescue StoryFormatNotFoundException
-        puts "ERROR: story format '#{new_format}' not found."
-        exit
+      # Read and parse format file, unless already set (by a Twee2::build_config.story_format call in the story file, for example)
+      if !build_config.story_format
+        begin
+          build_config.story_format = StoryFormat::new(options[:format])
+        rescue StoryFormatNotFoundException
+          puts "ERROR: story format '#{options[:format]}' not found."
+          exit
+        end
       end
-    end
-    # Warn if IFID not specified
-    if !build_config.story_ifid_specified
-      puts "NOTICE: You haven't specified your IFID. Consider adding to your code -"
-      puts "::StoryIFID[twee2]\nTwee2::build_config.story_ifid = '#{build_config.story_ifid}'"
+      # Load story format, if for some reason Twee2::build_config.story_format is set to a string rather than an instance
+      if build_config.story_format.is_a?(String)
+        new_format = build_config.story_format
+        begin
+          build_config.story_format = StoryFormat::new(new_format)
+        rescue StoryFormatNotFoundException
+          puts "ERROR: story format '#{new_format}' not found."
+          exit
+        end
+      end
+      # Warn if IFID not specified
+      if !build_config.story_ifid_specified
+        puts "NOTICE: You haven't specified your IFID. Consider adding to your code -"
+        puts "::StoryIFID[twee2]\nTwee2::build_config.story_ifid = '#{build_config.story_ifid}'"
+      end
     end
     # Make sure output directory exists
     FileUtils.mkdir_p(File.dirname(output))
@@ -53,20 +54,21 @@ module Twee2
   end
   
   def self.export(input, output)
-    Dir.chdir(::File.dirname(input))
+    Dir.chdir(::File.dirname(input)) do
 
-    # Read and parse input file
-    begin
-      build_config.story_file = StoryFile::new(input)
-    rescue StoryFileNotFoundException
-      puts "ERROR: story file '#{input}' not found."
-      exit
-    end
+      # Read and parse input file
+      begin
+        build_config.story_file = StoryFile::new(input)
+      rescue StoryFileNotFoundException
+        puts "ERROR: story file '#{input}' not found."
+        exit
+      end
 
-    # Warn if IFID not specified
-    if !build_config.story_ifid_specified
-      puts "NOTICE: You haven't specified your IFID. Consider adding to your code -"
-      puts "::StoryIFID[twee2]\nTwee2::build_config.story_ifid = '#{build_config.story_ifid}'"
+      # Warn if IFID not specified
+      if !build_config.story_ifid_specified
+        puts "NOTICE: You haven't specified your IFID. Consider adding to your code -"
+        puts "::StoryIFID[twee2]\nTwee2::build_config.story_ifid = '#{build_config.story_ifid}'"
+      end
     end
     
     if File.directory? output
@@ -113,9 +115,23 @@ module Twee2
   end
 
   # Reverse-engineers a Twee2/Twine 2 output HTML file into a Twee2 source file
-  def self.decompile(url, output, encoding:"utf-8")
+  def self.decompile(url, output, options)
+    exclude_passages = []
+    Dir.chdir(::File.dirname(output)) do
+      if options.key?('exclude-from')
+        options['exclude-from'].split(',').map(&:strip).each do |filename|
+          puts filename
+          exclude_passages += StoryFile::new(filename).passages.keys
+        end
+      end
+      
+      if options.key?('exclude')
+        exclude_passages += options['exclude'].split(',').map(&:strip)
+      end
+    end
+    
     File::open(output, 'w') do |out|
-      out.print Decompiler::decompile(url)
+      out.print Decompiler::decompile(url, exclude_passages)
     end
     puts "Done"
   end
