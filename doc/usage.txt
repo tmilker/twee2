@@ -5,6 +5,9 @@ Usage:
   twee2 build [input.tw2] [output.html] [[--format=story_format]]
     Compiles the specified twee-like file into an output file. optionally
     specify the format (Harlowe, Paperthin, Snowman, SugarCube, etc.).
+    
+  twee2 export [input.tw2] [output.html]
+    Converts a .tw2 file into a source html file suitable for use with the Twine 2 gui.
 
   twee2 watch [input.tw2] [output.html] [[--format=story_format]]
     Syntax is the same as build, but twee2 will automatically watch for
@@ -13,7 +16,7 @@ Usage:
   twee2 formats
     Lists the output formats that are understood.
 
-  twee2 decompile [URL] [output.tw2]
+  twee2 decompile [URL] [output.tw2] [[--exclude=exclude_passages]] [[--exclude-from=file1.tw2,file2.tw2]]
     Decompiles a Twee2/Twine 2 HTML output file at a specified URL into
     a Twee2 source file.
 
