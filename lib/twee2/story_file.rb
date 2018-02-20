@@ -68,7 +68,7 @@ module Twee2
       # Run each passage through a preprocessor, if required
       run_preprocessors
       # Extract 'special' passages and mark them as not being included in output
-      story_css, pid, story_js, @story_start_pid, @story_start_name = '', 0, '', nil, 'Start'
+      @story_css, pid, @story_js, @story_start_pid, @story_start_name = '', 0, '', nil, 'Start'
       @passages.each_key do |k|
         if k == 'StoryTitle'
           Twee2::build_config.story_name = @passages[k][:content]
@@ -76,10 +76,10 @@ module Twee2
         elsif k == 'StoryIncludes'
           @passages[k][:exclude_from_output] = true # includes should already have been handled above
         elsif @passages[k][:tags].include? 'stylesheet'
-          story_css << "#{@passages[k][:content]}\n"
+          @story_css << "#{@passages[k][:content]}\n"
           @passages[k][:exclude_from_output] = true
         elsif @passages[k][:tags].include? 'script'
-          story_js << "#{@passages[k][:content]}\n"
+          @story_js << "#{@passages[k][:content]}\n"
           @passages[k][:exclude_from_output] = true
         elsif @passages[k][:tags].include? 'twee2'
           eval @passages[k][:content]
@@ -101,8 +101,8 @@ module Twee2
                                       format: '{{STORY_FORMAT}}',
                                      options: ''
                       }) do
-        @story_data.style(story_css.to_sym, role: 'stylesheet', id: 'twine-user-stylesheet', type: 'text/twine-css')
-        @story_data.script(story_js.to_sym, role: 'script', id: 'twine-user-script', type: 'text/twine-javascript')
+        @story_data.style('{{STORY_CSS}}', role: 'stylesheet', id: 'twine-user-stylesheet', type: 'text/twine-css')
+        @story_data.script('{{STORY_JS}}', role: 'script', id: 'twine-user-script', type: 'text/twine-javascript')
         @passages.each do |k,v|
           unless v[:exclude_from_output]
             @story_data.tag!('tw-passagedata', { pid: v[:pid], name: k, tags: v[:tags].join(' '), position: v[:position] }, v[:content])
@@ -113,7 +113,10 @@ module Twee2
 
     # Returns the rendered XML that represents this story
     def xmldata
-      data = @story_data.target!
+      @story_data \
+        .target! \
+        .sub('{{STORY_CSS}}') { @story_css } \
+        .sub('{{STORY_JS}}') { @story_js }
     end
 
     # Runs HAML, Coffeescript etc. preprocessors across each applicable passage
