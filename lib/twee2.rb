@@ -10,6 +10,8 @@ module Twee2
   DEFAULT_FORMAT = 'Harlowe'
 
   def self.build(input, output, options = {})
+    Dir.chdir(::File.dirname(input))
+    
     # Read and parse input file
     begin
       build_config.story_file = StoryFile::new(input)
