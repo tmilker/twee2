@@ -49,6 +49,40 @@ module Twee2
     end
     puts "Done"
   end
+  
+  def self.export(input, output)
+    Dir.chdir(::File.dirname(input))
+
+    # Read and parse input file
+    begin
+      build_config.story_file = StoryFile::new(input)
+    rescue StoryFileNotFoundException
+      puts "ERROR: story file '#{input}' not found."
+      exit
+    end
+
+    # Warn if IFID not specified
+    if !build_config.story_ifid_specified
+      puts "NOTICE: You haven't specified your IFID. Consider adding to your code -"
+      puts "::StoryIFID[twee2]\nTwee2::build_config.story_ifid = '#{build_config.story_ifid}'"
+    end
+    
+    if File.directory? output
+      output = File.join(output, build_config.story_name + '.html')
+    elsif File.basename(output, suffix='.html') != build_config.story_name
+      puts "Warning: output filename (#{output}) does not match story's title (#{build_config.story_name})"
+    end
+    puts "Writing output to #{output}"
+    
+    # Make sure output directory exists
+    FileUtils.mkdir_p(File.dirname(output))
+    
+    # Produce output file
+    File::open(output, 'w', encoding: "utf-8") do |out|
+      out.print build_config.story_file.xmldata
+    end
+    puts "Done"
+  end
 
   def self.watch(input, output, options = {})
     puts "Compiling #{output}"
