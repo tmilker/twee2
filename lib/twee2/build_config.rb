@@ -5,7 +5,7 @@ module Twee2
   class BuildConfig
     include Singleton
 
-    attr_accessor :story_format, :story_file, :story_name
+    attr_accessor :story_format, :story_file, :story_name, :story_format_version
     attr_reader :story_ifid, :story_ifid_specified
 
     # Set defaults

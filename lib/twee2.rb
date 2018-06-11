@@ -85,7 +85,8 @@ module Twee2
     File::open(output, 'w', encoding: "utf-8") do |out|
       out.print(
         build_config.story_file.xmldata
-        .sub('{{STORY_FORMAT}}') { options[:story_format] || build_config.story_format }
+        .sub('{{STORY_FORMAT}}') { options[:format] || build_config.story_format }
+        .sub('{{STORY_FORMAT_VERSION}}') { options[:format_version] || build_config.story_format_version }
       )
     end
     puts "Done"

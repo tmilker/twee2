@@ -15,6 +15,7 @@ class Twee2CLI < Thor
   
   desc 'export [INPUT] [OUTPUT]', 'export a Twee-like file into a Twine2 Source file'
   method_option :format, type: :string, default: Twee2::DEFAULT_FORMAT
+  method_option :format_version, type: :string, default: nil
   def export(input, output)
     Twee2::export(input, output)
   end
