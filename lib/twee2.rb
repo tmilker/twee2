@@ -53,7 +53,7 @@ module Twee2
     puts "Done"
   end
   
-  def self.export(input, output)
+  def self.export(input, output, options={})
     Dir.chdir(::File.dirname(input)) do
 
       # Read and parse input file
@@ -83,7 +83,10 @@ module Twee2
     
     # Produce output file
     File::open(output, 'w', encoding: "utf-8") do |out|
-      out.print build_config.story_file.xmldata
+      out.print(
+        build_config.story_file.xmldata
+        .sub('{{STORY_FORMAT}}') { options[:story_format] || build_config.story_format }
+      )
     end
     puts "Done"
   end
