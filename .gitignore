@@ -1,4 +1,5 @@
 pkg/
 testdata/
 Gemfile.lock
-*~
+*
+~.bundle
