@@ -23,14 +23,14 @@ module Twee2
     def initialize(filename)
       raise(StoryFileNotFoundException) if !File::exists?(filename)
       @passages, current_passage = {}, nil
-      @child_story_files = []
 
       # Load file into memory to begin with
-      lines = File::read(filename, encoding: 'utf-8').split(/\r?\n/)
+      lines = load_file(filename)
+      
       # First pass - go through and perform 'includes'
       i, in_story_includes_section = 0, false
       while i < lines.length
-        line = lines[i]
+        filename, lineno, line = lines[i]
         if line =~ /^:: *StoryIncludes */
           in_story_includes_section = true
         elsif line =~ /^::/
@@ -39,16 +39,18 @@ module Twee2
           child_file = line.strip
           # include a file here because we're in the StoryIncludes section
           if File::exists?(child_file)
-            lines.push(*File::read(child_file).split(/\r?\n/)) # add it on to the end
-            child_story_files.push(child_file)
+            lines[i,0] = load_file(child_file)
           else
             puts "WARNING: tried to include file '#{line.strip}' via StoryIncludes but file was not found."
           end
         elsif line =~ /^( *)::@include (.*)$/
           # include a file here because an @include directive was spotted
-          prefix, filename = $1, $2.strip
-          if File::exists?(filename)
-            lines[i,1] = File::read(filename, encoding: 'utf-8').split(/\r?\n/).map{|l|"#{prefix}#{l}"} # insert in-place, with prefix of appropriate amount of whitespace
+          prefix, child_file = $1, $2.strip
+          if File::exists?(child_file)
+            # insert in-place, with prefix of appropriate amount of whitespace
+            lines[i,1] = load_file(child_file
+                         .map{|filename, lineno, line|
+                              [filename, lineno,"#{prefix}#{line}"]}
             i-=1 # process this line again, in case of ::@include nesting
           else
             puts "WARNING: tried to ::@include file '#{filename}' but file was not found."
@@ -57,11 +59,19 @@ module Twee2
         i+=1
       end
       # Second pass - parse the file
-      lines.each do |line|
+      lines.each do |filename, fileno, line|
         if line =~ /^:: *([^\[]*?) *(\[(.*?)\])? *(<(.*?)>)? *$/
-          @passages[current_passage = $1.strip] = { tags: ($3 || '').split(' '), position: $5 || '0,0', content: '', exclude_from_output: false, pid: nil}
+          @passages[current_passage = $1.strip] = {
+            tags: ($3 || '').split(),
+            position: $5 || '0,0',
+            content: '',
+            exclude_from_output: false,
+            pid: nil,
+            filename: filename,
+            lineno: lineno,
+          }
         elsif current_passage
-          @passages[current_passage][:content] << "#{line}\n"
+          @passages[current_passage][:content] << line
         end
       end
       @passages.each_key{|k| @passages[k][:content].strip!} # Strip excessive trailing whitespace
@@ -141,6 +151,13 @@ module Twee2
           @passages[k][:content] =  Sass::Engine.new(@passages[k][:content], :syntax => :scss).render
         end
       end
+    end
+    private
+    def load_file(filename)
+      File::read(filename, encoding: 'utf-8')
+      .lines
+      .each.with_index(1)
+      .map{ |line,lineno| [filename, lineno, line] }
     end
   end
 end
