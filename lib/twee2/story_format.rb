@@ -22,7 +22,7 @@ module Twee2
         .gsub('{{STORY_NAME}}') { Twee2::build_config.story_name } \
         .gsub('{{STORY_DATA}}') { Twee2::build_config.story_file.xmldata } \
         .gsub('{{STORY_FORMAT}}') { @name }
-        .gsub('{{STORY_FORMAT_VERSION}}') {@version }
+        .gsub('{{STORY_FORMAT_VERSION}}') { @version }
     end
 
     # Returns an array containing the known StoryFormat names
