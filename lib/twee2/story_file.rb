@@ -106,7 +106,6 @@ module Twee2
           @passages[k][:pid] = (pid += 1)
         end
       end
-    end
     
     def lint
       links = []
@@ -126,11 +125,11 @@ module Twee2
             .map { |x| x[0] }
             .each do |link|
               # OMG that's a mouthful... but that's a properly quoted/formatted twine link
-              if m = link.match(/\A(('(?<lq>([^']|\\')+)')|("(?<lq>([^"]|\\")+)")|(?<l>[^<>|'"]+))(?<style>->|\|)(.+))\Z/)
+              if m = link.match(/\A(('(?<lq>([^']|\\')+)')|("(?<lq>([^"]|\\")+)")|(?<l>[^<>|'"]+))(?<style>->|\|)(.+)\Z/)
                 links.append({
                   style: m[:style],
                   dest: m[:r],
-                  text: unquote(m[:lq]), m[:l],
+                  text: unquote(m[:lq]) || m[:l],
                   filename: filename,
                   lineno: lineno,
                 })
